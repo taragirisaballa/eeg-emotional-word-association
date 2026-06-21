@@ -46,6 +46,23 @@ This workflow writes:
 
 Preprocessing choices and current QC assumptions are documented in `docs/eeg_preprocessing.md`.
 
+## Step 3 EEG Feature Ranking
+
+```bash
+.venv/bin/python scripts/rank_eeg_features.py
+```
+
+This workflow ranks the EEG features extracted in Step 2 and writes:
+
+1. `outputs/feature_ranking/ranked_eeg_features.csv`
+2. `outputs/feature_ranking/top_10_eeg_features.csv`
+3. `outputs/feature_ranking/feature_ranking_report.md`
+4. `outputs/feature_ranking/feature_ranking_summary.json`
+
+Feature ranking choices are documented in `docs/eeg_feature_ranking.md`.
+
+The selected Step 3 feature set is stored in `config/selected_eeg_features.txt`.
+
 ## Pipeline Scope
 
 1. Loads BIDS-style EEG/event files and Empatica physiology files.
