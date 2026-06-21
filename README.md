@@ -82,6 +82,25 @@ It writes:
 
 Modeling choices are documented in `docs/model_training.md`.
 
+## Step 5 Multimodal Model Training
+
+```bash
+.venv/bin/python scripts/train_multimodal_model.py --dataset data/ds007955
+```
+
+This workflow concatenates the selected EEG features, pre-response physiology summaries, metadata, and labels into one modeling table. It trains the same scikit-learn model set used in Step 4.
+
+It writes:
+
+1. `outputs/multimodal_model/multimodal_modeling_dataset.csv`
+2. `outputs/multimodal_model/multimodal_model_metrics.csv`
+3. `outputs/multimodal_model/multimodal_model_predictions.csv`
+4. `outputs/multimodal_model/multimodal_feature_importance.csv`
+5. `outputs/multimodal_model/multimodal_model_report.md`
+6. `outputs/multimodal_model/multimodal_model_summary.json`
+
+Multimodal modeling choices are documented in `docs/multimodal_model_training.md`.
+
 ## Pipeline Scope
 
 1. Loads BIDS-style EEG/event files and Empatica physiology files.
