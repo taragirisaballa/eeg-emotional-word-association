@@ -1,0 +1,7 @@
+mne>=1.12
+numpy>=2.0
+pandas>=3.0
+scipy>=1.16
+scikit-learn>=1.7
+pymatreader>=1.1
+

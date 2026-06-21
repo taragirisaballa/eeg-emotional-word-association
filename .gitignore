@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.cache/
+.DS_Store
+
+# OpenNeuro/DataLad data should be downloaded locally, not committed.
+data/
+
+# Reproducible pipeline outputs.
+outputs/
