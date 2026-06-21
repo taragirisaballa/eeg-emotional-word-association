@@ -101,6 +101,43 @@ It writes:
 
 Multimodal modeling choices are documented in `docs/multimodal_model_training.md`.
 
+## Step 6 Hypothesis Testing
+
+```bash
+.venv/bin/python scripts/test_hypothesis.py
+```
+
+This workflow compares selected suggested words against original associations using subject-level condition contrasts. It tests whether the selected EEG and physiology features differ before the response.
+
+It writes:
+
+1. `outputs/hypothesis_testing/condition_counts_by_subject.csv`
+2. `outputs/hypothesis_testing/subject_level_condition_tests.csv`
+3. `outputs/hypothesis_testing/event_level_condition_tests.csv`
+4. `outputs/hypothesis_testing/hypothesis_test_report.md`
+5. `outputs/hypothesis_testing/hypothesis_test_summary.json`
+
+The hypothesis and statistical approach are documented in `docs/hypothesis_testing.md`.
+
+## Step 7 Semantic Transition Analysis
+
+```bash
+.venv/bin/python scripts/test_semantic_transitions.py
+```
+
+This workflow compares high-coherence and low-coherence emotional word transitions using the dataset's semantic similarity scores. It uses only selected-word events with nonzero semantic similarity so the contrast focuses on associative structure rather than response mode.
+
+It writes:
+
+1. `outputs/semantic_transition_analysis/semantic_transition_dataset.csv`
+2. `outputs/semantic_transition_analysis/semantic_condition_counts_by_subject.csv`
+3. `outputs/semantic_transition_analysis/semantic_subject_level_tests.csv`
+4. `outputs/semantic_transition_analysis/semantic_event_level_tests.csv`
+5. `outputs/semantic_transition_analysis/semantic_transition_report.md`
+6. `outputs/semantic_transition_analysis/semantic_transition_summary.json`
+
+The semantic transition hypothesis and statistical approach are documented in `docs/semantic_transition_analysis.md`.
+
 ## Pipeline Scope
 
 1. Loads BIDS-style EEG/event files and Empatica physiology files.
