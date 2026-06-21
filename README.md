@@ -16,13 +16,35 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-## First Smoke Test
+## Step 1 Smoke Test
 
 ```bash
 .venv/bin/python scripts/run_pipeline.py --dataset data/ds007955 --subjects sub-01 --skip-model
 ```
 
 This writes a one-subject feature table to `outputs/features_with_labels.csv`.
+
+## Step 2 EEG Preprocessing
+
+```bash
+.venv/bin/python scripts/preprocess_eeg.py --dataset data/ds007955 --subjects sub-01 --make-plots
+```
+
+For the full EEG preprocessing pass:
+
+```bash
+.venv/bin/python scripts/preprocess_eeg.py --dataset data/ds007955 --make-plots
+```
+
+This workflow writes:
+
+1. `outputs/eeg_preprocessing/eeg_epoch_features.csv`
+2. `outputs/eeg_preprocessing/eeg_channel_summary.csv`
+3. `outputs/eeg_preprocessing/eeg_preprocessing_qc.csv`
+4. `outputs/eeg_preprocessing/eeg_preprocessing_qc.json`
+5. PSD comparison plots in `outputs/eeg_preprocessing/plots/`
+
+Preprocessing choices and current QC assumptions are documented in `docs/eeg_preprocessing.md`.
 
 ## Pipeline Scope
 

@@ -31,7 +31,6 @@ from sklearn.model_selection import GroupKFold, StratifiedKFold, cross_val_predi
 from sklearn.pipeline import Pipeline
 
 
-EEG_CHANNELS = ["Fp1", "Fp2", "F3", "F4", "P7", "P8", "O1", "O2"]
 BANDS = {
     "delta": (1.0, 4.0),
     "theta": (4.0, 8.0),
@@ -39,7 +38,15 @@ BANDS = {
     "beta": (13.0, 30.0),
     "low_gamma": (30.0, 40.0),
 }
-ASYMMETRY_PAIRS = [("Fp1", "Fp2"), ("F3", "F4"), ("P7", "P8"), ("O1", "O2")]
+ASYMMETRY_PAIRS = [
+    ("FP1", "FP2"),
+    ("Fp1", "Fp2"),
+    ("F3", "F4"),
+    ("C3", "C4"),
+    ("P7", "P8"),
+    ("T5", "T6"),
+    ("O1", "O2"),
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,7 +63,6 @@ def parse_args() -> argparse.Namespace:
 
 def load_raw_eeg(set_path: Path) -> mne.io.BaseRaw:
     raw = mne.io.read_raw_eeglab(set_path, preload=True, verbose="ERROR")
-    raw.pick([ch for ch in EEG_CHANNELS if ch in raw.ch_names])
     raw.set_channel_types({ch: "eeg" for ch in raw.ch_names})
     raw.set_montage("standard_1020", on_missing="ignore")
     raw.set_eeg_reference("average", projection=False, verbose="ERROR")
