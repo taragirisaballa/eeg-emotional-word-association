@@ -1,25 +1,119 @@
 # EEG Emotional Word Association
 
-Neurotech project using OpenNeuro dataset `ds007955`: EEG and autonomic responses during an emotional word association task.
+Analysis of EEG, autonomic physiology, and behavioral responses during an emotional word association task from OpenNeuro dataset `ds007955`.
 
-The first modeling target is `NewWord`: whether a participant entered an original association (`1`) or selected a suggested word (`0`). Each event becomes one machine-learning row using response-locked EEG and autonomic features from the window before the response.
+Participants responded to fear-related word prompts either by selecting a suggested word or entering an original association. The project looks at whether pre-response brain and physiology signals carry information about that response, and whether semantic movement through emotional associations shows measurable EEG/autonomic structure.
 
-## Current Findings
+## Main Result
 
-The clearest technical result is that multimodal physiology improved prediction compared with EEG alone:
-
-```text
-EEG-only full valid-epoch model: balanced accuracy 0.532, ROC AUC 0.505
-EEG + physiology full valid-epoch model: balanced accuracy 0.631, ROC AUC 0.707
-```
-
-The strongest neuroscience interpretation is exploratory:
+The strongest result is predictive rather than confirmatory:
 
 ```text
-Original word associations and semantic transition structure show suggestive EEG/autonomic differences, especially around central theta/alpha activity and autonomic timing, but the statistical tests do not survive FDR correction in this small dataset.
+EEG-only model:          balanced accuracy 0.532, ROC AUC 0.505
+EEG + physiology model:  balanced accuracy 0.631, ROC AUC 0.707
 ```
 
-So the main takeaway is not "this proves the neuroscience." It is more like: the full EEG + physiology pipeline works, multimodal signals helped prediction, and the neuroscience effects are interesting but still exploratory.
+Adding autonomic physiology improved prediction over EEG alone. That suggests the emotional word association task is better captured as a multimodal brain-body signal than as an EEG-only problem.
+
+The semantic analysis is the more task-specific neuroscience angle. Higher semantic coherence showed an exploratory positive relationship with C3 theta power:
+
+```text
+mean within-subject r = 0.774
+FDR p = 0.603
+```
+
+That points toward a possible link between coherent emotional associations and central theta activity, but it does not survive correction.
+
+The hypothesis tests were more cautious. Original associations and semantic transition structure showed some suggestive EEG/autonomic patterns, especially around central theta/alpha activity and autonomic timing, but none of the tested features survived FDR correction. I would treat those results as exploratory, not definitive.
+
+## Data
+
+The dataset includes:
+
+1. EEG from an OpenBCI Cyton headset
+2. Empatica E4 physiology: EDA, BVP, IBI, and skin temperature
+3. Word-response events
+4. Semantic similarity scores between consecutive words
+
+EEG was recorded at 250 Hz from eight channels. The `.set` recordings expose channel labels as:
+
+```text
+FP1, FP2, C3, C4, T5, T6, O1, O2
+```
+
+Participant 7 does not have physiology files, so those physiology features are marked unavailable and handled by imputation during modeling.
+
+## Analysis
+
+The analysis uses response-locked windows from `-3.0` to `0.0` seconds before each word response.
+
+The main processing path:
+
+1. Load EEG, physiology, and event files.
+2. Filter EEG with average reference, 60 Hz notch filtering, and 1-40 Hz band-pass filtering.
+3. Extract EEG features: bandpower, relative bandpower, asymmetry, Hjorth features, entropy, and amplitude summaries.
+4. Rank EEG features and keep a selected top-10 feature set.
+5. Build EEG-only and EEG + physiology modeling tables.
+6. Train scikit-learn classifiers with subject-group cross-validation.
+7. Test exploratory condition contrasts:
+   selected words vs original associations
+   high-coherence vs low-coherence semantic transitions
+
+The selected EEG features are stored in:
+
+```text
+config/selected_eeg_features.txt
+```
+
+## Models
+
+The modeling scripts compare:
+
+1. Gradient boosting
+2. Logistic regression
+3. Random forest
+
+For the full valid-epoch multimodal table, random forest performed best:
+
+```text
+balanced accuracy: 0.631
+ROC AUC: 0.707
+```
+
+On the cleaner non-artifact subset, logistic regression performed best, but that subset only had 32 rows, so I treat it as a sensitivity check rather than the headline result.
+
+## Hypothesis Tests
+
+Two condition analyses are included.
+
+Original associations vs selected suggested words:
+
+```text
+events used: 141
+subjects used: 9
+selected-word events: 61
+original-association events: 80
+```
+
+The strongest effects involved central theta/alpha EEG power, left-frontal delta power, and autonomic measures, but none survived FDR correction.
+
+Semantic transition analysis:
+
+```text
+events used: 60
+subjects used: 7
+high-coherence events: 23
+low-coherence events: 37
+```
+
+The strongest trend was a positive within-subject relationship between semantic similarity and C3 theta power:
+
+```text
+mean within-subject r = 0.774
+FDR p = 0.603
+```
+
+That is interesting, but not statistically strong enough to claim as a confirmed effect.
 
 ## Setup
 
@@ -33,139 +127,65 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-## Step 1 Smoke Test
+## Running The Analysis
 
-```bash
-.venv/bin/python scripts/run_pipeline.py --dataset data/ds007955 --subjects sub-01 --skip-model
-```
-
-This writes a one-subject feature table to `outputs/features_with_labels.csv`.
-
-## Step 2 EEG Preprocessing
-
-```bash
-.venv/bin/python scripts/preprocess_eeg.py --dataset data/ds007955 --subjects sub-01 --make-plots
-```
-
-For the full EEG preprocessing pass:
+Preprocess EEG:
 
 ```bash
 .venv/bin/python scripts/preprocess_eeg.py --dataset data/ds007955 --make-plots
 ```
 
-This writes:
-
-1. `outputs/eeg_preprocessing/eeg_epoch_features.csv`
-2. `outputs/eeg_preprocessing/eeg_channel_summary.csv`
-3. `outputs/eeg_preprocessing/eeg_preprocessing_qc.csv`
-4. `outputs/eeg_preprocessing/eeg_preprocessing_qc.json`
-5. PSD comparison plots in `outputs/eeg_preprocessing/plots/`
-
-Preprocessing choices and QC notes are in `docs/eeg_preprocessing.md`.
-
-## Step 3 EEG Feature Ranking
+Rank EEG features:
 
 ```bash
 .venv/bin/python scripts/rank_eeg_features.py
 ```
 
-This ranks the EEG features from Step 2 and writes:
-
-1. `outputs/feature_ranking/ranked_eeg_features.csv`
-2. `outputs/feature_ranking/top_10_eeg_features.csv`
-3. `outputs/feature_ranking/feature_ranking_report.md`
-4. `outputs/feature_ranking/feature_ranking_summary.json`
-
-Feature ranking notes are in `docs/eeg_feature_ranking.md`.
-
-The selected Step 3 feature set is stored in `config/selected_eeg_features.txt`.
-
-## Step 4 EEG Model Training
+Train the EEG-only model:
 
 ```bash
 .venv/bin/python scripts/train_model.py
 ```
 
-This combines the selected EEG features with the `new_word` label and trains three scikit-learn classifiers: gradient boosting, logistic regression, and random forest.
-
-It writes:
-
-1. `outputs/model_training/modeling_dataset.csv`
-2. `outputs/model_training/model_metrics.csv`
-3. `outputs/model_training/model_predictions.csv`
-4. `outputs/model_training/feature_importance.csv`
-5. `outputs/model_training/model_training_report.md`
-6. `outputs/model_training/model_training_summary.json`
-
-Modeling notes are in `docs/model_training.md`.
-
-## Step 5 Multimodal Model Training
+Train the multimodal model:
 
 ```bash
 .venv/bin/python scripts/train_multimodal_model.py --dataset data/ds007955
 ```
 
-This concatenates the selected EEG features, pre-response physiology summaries, metadata, and labels into one modeling table. It trains the same model set used in Step 4.
-
-It writes:
-
-1. `outputs/multimodal_model/multimodal_modeling_dataset.csv`
-2. `outputs/multimodal_model/multimodal_model_metrics.csv`
-3. `outputs/multimodal_model/multimodal_model_predictions.csv`
-4. `outputs/multimodal_model/multimodal_feature_importance.csv`
-5. `outputs/multimodal_model/multimodal_model_report.md`
-6. `outputs/multimodal_model/multimodal_model_summary.json`
-
-Multimodal modeling notes are in `docs/multimodal_model_training.md`.
-
-## Step 6 Hypothesis Testing
+Run the original-vs-selected condition test:
 
 ```bash
 .venv/bin/python scripts/test_hypothesis.py
 ```
 
-This compares selected suggested words against original associations using subject-level condition contrasts. The question is whether the selected EEG and physiology features differ before the response.
-
-It writes:
-
-1. `outputs/hypothesis_testing/condition_counts_by_subject.csv`
-2. `outputs/hypothesis_testing/subject_level_condition_tests.csv`
-3. `outputs/hypothesis_testing/event_level_condition_tests.csv`
-4. `outputs/hypothesis_testing/hypothesis_test_report.md`
-5. `outputs/hypothesis_testing/hypothesis_test_summary.json`
-
-The hypothesis and stats notes are in `docs/hypothesis_testing.md`.
-
-## Step 7 Semantic Transition Analysis
+Run the semantic transition analysis:
 
 ```bash
 .venv/bin/python scripts/test_semantic_transitions.py
 ```
 
-This compares high-coherence and low-coherence emotional word transitions using the dataset's semantic similarity scores. It only uses selected-word events with nonzero semantic similarity, so the contrast is about associative structure rather than response mode.
+## Repository Layout
 
-It writes:
+```text
+config/
+  selected_eeg_features.txt
 
-1. `outputs/semantic_transition_analysis/semantic_transition_dataset.csv`
-2. `outputs/semantic_transition_analysis/semantic_condition_counts_by_subject.csv`
-3. `outputs/semantic_transition_analysis/semantic_subject_level_tests.csv`
-4. `outputs/semantic_transition_analysis/semantic_event_level_tests.csv`
-5. `outputs/semantic_transition_analysis/semantic_continuous_correlations.csv`
-6. `outputs/semantic_transition_analysis/semantic_transition_report.md`
-7. `outputs/semantic_transition_analysis/semantic_transition_summary.json`
+docs/
+  eeg_preprocessing.md
+  eeg_feature_ranking.md
+  model_training.md
+  multimodal_model_training.md
+  hypothesis_testing.md
+  semantic_transition_analysis.md
 
-The semantic transition notes are in `docs/semantic_transition_analysis.md`.
+scripts/
+  preprocess_eeg.py
+  rank_eeg_features.py
+  train_model.py
+  train_multimodal_model.py
+  test_hypothesis.py
+  test_semantic_transitions.py
+```
 
-## Pipeline Scope
-
-1. Loads BIDS-style EEG/event files and Empatica physiology files.
-2. Preprocesses EEG with average reference, 60 Hz notch filtering, and 1-40 Hz band-pass filtering.
-3. Builds response-locked epochs from `-3.0` to `0.0` seconds before each word event.
-4. Extracts EEG features: per-channel bandpower, relative bandpower, asymmetry, Hjorth parameters, entropy, and artifact summaries.
-5. Extracts physiology features from EDA, BVP, IBI, and temperature when available.
-6. Concatenates EEG, autonomic, behavioral/context, subject, and label columns into one feature table.
-7. Ranks features and reports the top 10.
-8. Trains scikit-learn classifiers with subject-group cross-validation when feasible.
-9. Tests condition-level and semantic-transition hypotheses.
-
-Pipeline outputs are written to `outputs/`.
+Generated outputs are written to `outputs/` and are not tracked in git.
