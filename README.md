@@ -63,6 +63,25 @@ Feature ranking choices are documented in `docs/eeg_feature_ranking.md`.
 
 The selected Step 3 feature set is stored in `config/selected_eeg_features.txt`.
 
+## Step 4/5 Model Training
+
+```bash
+.venv/bin/python scripts/train_model.py
+```
+
+This workflow combines the selected EEG features with the `new_word` label and trains scikit-learn classifiers. The main model is `GradientBoostingClassifier`, with logistic regression and random forest included as baselines.
+
+It writes:
+
+1. `outputs/model_training/modeling_dataset.csv`
+2. `outputs/model_training/model_metrics.csv`
+3. `outputs/model_training/model_predictions.csv`
+4. `outputs/model_training/feature_importance.csv`
+5. `outputs/model_training/model_training_report.md`
+6. `outputs/model_training/model_training_summary.json`
+
+Modeling choices are documented in `docs/model_training.md`.
+
 ## Pipeline Scope
 
 1. Loads BIDS-style EEG/event files and Empatica physiology files.
